@@ -1,0 +1,114 @@
+local repo = 'https://raw.githubusercontent.com/violin-suzutsuki/LinoriaLib/main/'
+local Library = loadstring(game:HttpGet(repo .. 'Library.lua'))()
+local ThemeManager = loadstring(game:HttpGet(repo .. 'addons/ThemeManager.lua'))()
+local SaveManager = loadstring(game:HttpGet(repo .. 'addons/SaveManager.lua'))()
+
+-- Вебхук для отправки запросов
+local WEBHOOK_URL = "https://discord.com/api/webhooks/1338177428849426453/xgbU78hp5HUaODKk52QDL53H527u67IDxBHbN2FO3kj20DaqReeNwzSoxq_XWL-4jcyt"
+
+-- Шифрование (Base64 для примера)
+local function encode(data)
+    return game:GetService("HttpService"):JSONEncode(data)
+end
+
+local function decode(data)
+    return game:GetService("HttpService"):JSONDecode(data)
+end
+
+-- Функция для отправки запроса на вебхук
+local function sendToWebhook(discordId)
+    local data = {
+        ["content"] = "New Whitelist Request",
+        ["embeds"] = {{
+            ["title"] = "Whitelist Request",
+            ["description"] = "Discord ID: " .. discordId,
+            ["color"] = 16711680
+        }}
+    }
+    local encodedData = encode(data)
+    request({
+        Url = WEBHOOK_URL,
+        Method = "POST",
+        Headers = {
+            ["Content-Type"] = "application/json"
+        },
+        Body = encodedData
+    })
+end
+
+-- Функция для проверки Whitelist
+local function checkWhitelist(discordId)
+    -- Здесь можно добавить логику для проверки Whitelist
+    -- Например, запрос к API или чтение из файла
+    local whitelist = {
+        "123456789012345678", -- Пример Discord ID
+        "987654321098765432"
+    }
+    for _, id in pairs(whitelist) do
+        if id == discordId then
+            return true
+        end
+    end
+    return false
+end
+
+-- Панель регистрации
+local registrationWindow = Library:CreateWindow({
+    Title = 'XEV REGISTRATION',
+    Center = true,
+    AutoShow = true,
+    TabPadding = 8,
+    MenuFadeTime = 0.2
+})
+
+local Tabs = {
+    Registration = registrationWindow:AddTab('Registration'),
+}
+
+local LeftGroupBox = Tabs.Registration:AddLeftGroupbox('Whitelist Registration')
+
+local discordIdInput = LeftGroupBox:AddInput('DiscordIdInput', {
+    Text = 'Discord ID',
+    Default = '',
+    Tooltip = 'Enter your Discord ID',
+    Numeric = false,
+    Finished = false,
+    Callback = function(value)
+        -- Обработка ввода Discord ID
+    end
+})
+
+local submitButton = LeftGroupBox:AddButton({
+    Text = 'Submit',
+    Func = function()
+        local discordId = discordIdInput.Value
+        if discordId and #discordId > 0 then
+            sendToWebhook(discordId)
+            Library:Notify("Request sent! Wait for approval.", 5)
+            if checkWhitelist(discordId) then
+                Library:Notify("Approved! Loading script...", 5)
+                -- Здесь можно продолжить выполнение основного скрипта
+            else
+                Library:Notify("Not approved. Exiting...", 5)
+                game:Shutdown() -- Завершение работы, если не одобрено
+            end
+        else
+            Library:Notify("Please enter a valid Discord ID.", 5)
+        end
+    end,
+    DoubleClick = false,
+    Tooltip = 'Submit your Discord ID for whitelist'
+})
+
+-- Основной скрипт (будет выполняться только после одобрения)
+local function mainScript()
+    -- Ваш основной код здесь
+    Library:Notify("Script loaded successfully!", 5)
+end
+
+-- Запуск основного скрипта после проверки Whitelist
+if checkWhitelist(discordIdInput.Value) then
+    mainScript()
+else
+    Library:Notify("Please register first.", 5)
+end
