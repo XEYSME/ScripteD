@@ -1,1 +1,724 @@
+local repo = 'https://raw.githubusercontent.com/violin-suzutsuki/LinoriaLib/main/'
 
+local Library = loadstring(game:HttpGet(repo .. 'Library.lua'))()
+local ThemeManager = loadstring(game:HttpGet(repo .. 'addons/ThemeManager.lua'))()
+local SaveManager = loadstring(game:HttpGet(repo .. 'addons/SaveManager.lua'))()
+
+local Window = Library:CreateWindow({
+    Title = 'XEV HUB',
+    Center = true,
+    AutoShow = true,
+    TabPadding = 8,
+    MenuFadeTime = 0.2
+})
+
+local Tabs = {
+    Main = Window:AddTab('AUTO'),
+    ['UI Settings'] = Window:AddTab('UI Settings'),
+}
+
+-- Добавляем Auto Load toggle в UI Settings
+
+-- Groupbox and Tabbox inherit the same functions
+-- except Tabboxes you have to call the functions on a tab (Tabbox:AddTab(name))
+local LeftGroupBox = Tabs.Main:AddLeftGroupbox('         Auto & Teleports')
+-- We can also get our Main tab via the following code:
+-- local LeftGroupBox = Window.Tabs.Main:AddLeftGroupbox('Groupbox')
+
+-- Tabboxes are a tiny bit different, but here's a basic example:
+--[[
+
+local TabBox = Tabs.Main:AddLeftTabbox() -- Add Tabbox on left side
+
+local Tab1 = TabBox:AddTab('Tab 1')
+local Tab2 = TabBox:AddTab('Tab 2')
+-- You can now call AddToggle, etc on the tabs you added to the Tabbox
+]]
+
+-- Groupbox:AddToggle
+-- Arguments: Index, Options
+LeftGroupBox:AddToggle('AutoRedeemTasks', {
+    Text = 'Auto Tasks',
+    Default = false,
+    Tooltip = 'Automatically redeem Tasks',
+    Callback = function(isToggled)
+        if isToggled then
+            for Index = 1, 6 do
+                wait(0.1)
+                game:GetService("ReplicatedStorage").Tasks.RedeemAward:FireServer(Index)
+            end
+        end
+    end
+})
+
+LeftGroupBox:AddToggle('MyToggle', {
+    Text = 'Auto Codes',
+    Default = false,
+    Tooltip = 'Automatically redeem codes',
+
+    Callback = function(Value)
+        local rp = game.ReplicatedStorage
+
+        local CODES = {
+            "115KFAVOURITE",
+            "110MILVISITS",
+            "STRAIGHTRIPTIDE",
+            "DRAGONHEADER",
+            "150KMEMBERS",
+            "70KLIKES",
+            "10KSUBS"
+        }
+
+        if Value then
+            for _, code in ipairs(CODES) do
+                rp.SendCode:FireServer(code)
+                task.wait(0.1)
+            end
+        end
+    end
+})
+local Players = game:GetService("Players")
+local TeleportService = game:GetService("TeleportService")
+
+local function teleportToGame(gameId)
+    local player = Players.LocalPlayer
+    TeleportService:Teleport(gameId, player)
+end
+
+local gameId = 13705109069
+
+LeftGroupBox:AddToggle('MyToggle', {
+    Text = 'Auto Autos',
+    Default = false,
+    Tooltip = 'Automatically teleport Autos (Demo)',
+
+    Callback = function(Value)
+        if Value then
+            teleportToGame(gameId)
+        end
+    end
+})
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
+
+local Players = game:GetService("Players")
+local TeleportService = game:GetService("TeleportService")
+
+local function teleportToGame(gameId)
+    local player = Players.LocalPlayer
+    TeleportService:Teleport(gameId, player)
+end
+
+local gameId = 17079303871
+
+LeftGroupBox:AddToggle('MyToggle', {
+    Text = 'Auto Tournament',
+    Default = false,
+    Tooltip = 'Automatically teleport Tournament (Demo)',
+
+    Callback = function(Value)
+        if Value then
+            teleportToGame(gameId)
+        end
+    end
+})
+
+local LeftGroupBox = Tabs.Main:AddLeftGroupbox('          Build & Slots')
+local lPlayer = game.Players.LocalPlayer
+local backpack = lPlayer.Backpack
+local rStorage = game.ReplicatedStorage 
+
+local itemsList = {
+    "Ace Eater", "Planetary", "Formless", "Serpent", "Emperor",
+    "King", "GodSpeed", "Updraft", "SwordScrew", "Monster",
+    "Acrobatic", "Riptide", "Nagi", "Chigiri", "WatchTower",
+    "Voracious", "Shadow", "Kunigami", "CopyCat", "Accelerate",
+    "Web", "Repel", "Neurotic", "Snatch", "Rough",
+    "DirectShot", "LongLegs", "Leader", "IronHead"
+}
+
+local YenValue = workspace[lPlayer.Name].RankSystem.Yen
+local YenLabel = LeftGroupBox:AddLabel('CURRENT YEN: ' .. YenValue.Value)
+
+local function updateYenDisplay()
+    YenLabel:SetText('CURRENT YEN: ' .. YenValue.Value)
+end
+
+YenValue.Changed:Connect(updateYenDisplay)
+updateYenDisplay()
+
+local currentLabel = LeftGroupBox:AddLabel('CURRENT WEAPON: ')
+local traitLabel = LeftGroupBox:AddLabel('CURRENT TRAIT: ')
+local heightLabel = LeftGroupBox:AddLabel('CURRENT HEIGHT: ')
+
+local function getCurrentHeight()
+    local heightValue = workspace[lPlayer.Name].HeightValue
+    if heightValue and heightValue:FindFirstChild("ActualHeight") and heightValue.ActualHeight:IsA("NumberValue") then
+        local heightIndex = heightValue.ActualHeight.Value
+        local heightMapping = {
+            [1] = "5.3",
+            [2] = "5.4",
+            [3] = "5.5",
+            [4] = "5.6",
+            [5] = "5.7",
+            [6] = "5.8",
+            [7] = "5.9",
+            [8] = "5.10",
+            [9] = "5.11",
+            [10] = "6.0",
+            [11] = "6.1",
+            [12] = "6.2",
+            [13] = "6.3"
+        }
+        return heightMapping[heightIndex] or "Unknown"
+    end
+    return "No height data"
+end
+
+local function updateBuildDisplay()
+    local foundItems = {}
+    local traitFolder = backpack:FindFirstChild("Trait")
+
+    for _, item in pairs(itemsList) do
+        if backpack:FindFirstChild(item) then
+            local trait = traitFolder and traitFolder:FindFirstChild(item)
+            local traitName = ""
+
+            if trait and trait:IsA("Object") then
+                traitName = trait.Name
+            end
+
+            table.insert(foundItems, string.upper(item) .. " " .. string.upper(traitName))
+        end
+    end
+
+    if #foundItems > 0 then
+        currentLabel:SetText('CURRENT WEAPON: ' .. table.concat(foundItems, ', '))
+    else
+        currentLabel:SetText('CURRENT WEAPON: ')
+    end
+
+    local foundTraits = {}
+    if traitFolder then
+        for _, trait in pairs(traitFolder:GetChildren()) do
+            if trait:IsA("Object") then
+                table.insert(foundTraits, string.upper(trait.Name))
+            end
+        end
+    end
+
+    if #foundTraits > 0 then
+        traitLabel:SetText('CURRENT TRAIT: ' .. table.concat(foundTraits, ', '))
+    else
+        traitLabel:SetText('CURRENT TRAIT: ')
+    end
+
+    local currentHeight = getCurrentHeight()
+    heightLabel:SetText('CURRENT HEIGHT: ' .. currentHeight)
+end
+
+local function onItemChanged()
+    updateBuildDisplay()
+end
+
+local function onTraitChanged()
+    updateBuildDisplay()
+end
+
+if backpack:FindFirstChild("Trait") then
+    local traitFolder = backpack.Trait
+    traitFolder.ChildAdded:Connect(onTraitChanged)
+    traitFolder.ChildRemoved:Connect(onTraitChanged)
+end
+
+backpack.ChildAdded:Connect(onItemChanged)
+backpack.ChildRemoved:Connect(onItemChanged)
+
+local heightValue = workspace[lPlayer.Name].HeightValue
+
+local function updateHeightDisplay()
+    local heightIndex = heightValue and heightValue:FindFirstChild("ActualHeight") and heightValue.ActualHeight:IsA("NumberValue") and heightValue.ActualHeight.Value or nil
+    local heightMapping = {
+        [1] = "5.3",
+        [2] = "5.4",
+        [3] = "5.5",
+        [4] = "5.6",
+        [5] = "5.7",
+        [6] = "5.8",
+        [7] = "5.9",
+        [8] = "5.10",
+        [9] = "5.11",
+        [10] = "6.0",
+        [11] = "6.1",
+        [12] = "6.2",
+        [13] = "6.3"
+    }
+    local currentHeight = heightMapping[heightIndex] or "Unknown"
+    heightLabel:SetText('CURRENT HEIGHT: ' .. currentHeight)
+end
+
+if heightValue:FindFirstChild("ActualHeight") then
+    heightValue.ActualHeight.Changed:Connect(updateHeightDisplay)
+end
+
+updateBuildDisplay()
+updateHeightDisplay()
+
+local SlotsRemote = rStorage.rerolls.Slots
+
+local MyButton = LeftGroupBox:AddButton({
+    Text = 'Change Slot',
+    Func = function()
+        SlotsRemote:FireServer(1)
+    end,
+    DoubleClick = false,
+    Tooltip = 'Tap to Change Slot'
+})
+
+local DuplicateButton = LeftGroupBox:AddButton({
+    Text = 'Duplicate Slot',
+    Func = function()
+        local Head = lPlayer.Character:WaitForChild("Head")
+        local TeleportService = game:GetService("TeleportService")
+        local Lobby = 12276235857
+
+        Head:Destroy()
+        lPlayer.CharacterAdded:Once(function()
+            SlotsRemote:FireServer(1)
+            task.delay(2, function()
+                TeleportService:Teleport(Lobby)
+            end)
+        end)
+    end,
+    DoubleClick = false,
+    Tooltip = 'Doing Duplicate Other Slot To Current'
+})
+
+
+
+
+local TabBox = Tabs.Main:AddRightTabbox() -- Add Tabbox on right side
+
+-- Anything we can do in a Groupbox, we can do in a Tabbox tab (AddToggle, AddSlider, AddLabel, etc etc...)
+-- Функция для уведомлений
+local Tab1 = TabBox:AddTab('Spinning')
+local rStorage = game:GetService("ReplicatedStorage")
+local lPlayer = game:GetService("Players").LocalPlayer 
+
+-- Сбор имен оружия
+local CollectedWeaponNames = {}
+for _, Weapon in ipairs(rStorage.Specs:GetChildren()) do
+    if not Weapon:IsA("Folder") then
+        table.insert(CollectedWeaponNames, Weapon.Name)
+    end
+end
+table.sort(CollectedWeaponNames)
+
+local SelectedWeapon = "None"
+local WeaponRemote = rStorage.rerolls.specreroll
+
+-- Выпадающий список для выбора оружия
+Tab1:AddDropdown('WeaponDropdown', {
+    Values = CollectedWeaponNames,
+    Default = SelectedWeapon,
+    Multi = false,
+    Text = 'Select Weapon',
+    Tooltip = 'Choose a Weapon to Get',
+    Callback = function(NewType)
+        SelectedWeapon = NewType
+    end
+})
+
+-- Сбор имен трейтов
+local CollectedTraitNames = {}
+for _, Trait in ipairs(rStorage.Specs.Traits:GetChildren()) do
+    if not Trait:IsA("Folder") then
+        table.insert(CollectedTraitNames, Trait.Name)
+    end
+end
+table.sort(CollectedTraitNames)
+
+local SelectedTrait = "None "
+local TraitRemote = rStorage.rerolls.traitreroll
+
+-- Выпадающий список для выбора трейта
+Tab1:AddDropdown('TraitDropdown', {
+    Values = CollectedTraitNames,
+    Default = SelectedTrait,
+    Multi = false,
+    Text = 'Select Trait',
+    Tooltip = 'Choose a Trait to Get',
+    Callback = function(NewType)
+        SelectedTrait = NewType
+    end
+})
+
+-- Выбор роста
+local SelectedHeight = "None "
+local reroll = rStorage.rerolls.heightreroll
+
+Tab1:AddDropdown('HeightDropdown', {
+    Values = {"5.3", "5.4", "5.5", "5.6", "5.7", "5.8", "5.9", "5.10", "5.11", "6.0", "6.1", "6.2", "6.3"},
+    Default = SelectedHeight,
+    Multi = false,
+    Text = 'Select Height',
+    Tooltip = 'Choose a Height to Get',
+    Callback = function(NewType)
+        SelectedHeight = NewType
+    end
+})
+
+-- Сбор имен FlowType
+local CollectedFlowTypeNames = {}
+for _, FlowType in ipairs(rStorage.FlowTypes.FlowValues:GetChildren()) do
+    if not FlowType:IsA("Folder") then
+        table.insert(CollectedFlowTypeNames, FlowType.Name)
+    end
+end
+table.sort(CollectedFlowTypeNames)
+
+local SelectedFlowType = "None"
+local FlowTypeRemote = rStorage.rerolls.flowreroll
+
+-- Выпадающий список для выбора FlowType
+Tab1:AddDropdown('FlowTypeDropdown', {
+    Values = CollectedFlowTypeNames,
+    Default = SelectedFlowType,
+    Multi = false,
+    Text = 'Select FlowType',
+    Tooltip = 'Choose a FlowType to Get',
+    Callback = function(NewType)
+        SelectedFlowType = NewType
+    end
+})
+
+local FlowBuffs = {"speed", "power", "hitbox", "cooldown", "stamina"}
+local SelectedFlowBuff = "None"
+local FlowBuffRemote = rStorage.rerolls.buffreroll
+
+-- Выпадающий список для выбора Flow Buff
+Tab1:AddDropdown('FlowBuffDropdown', {
+    Values = FlowBuffs,
+    Default = SelectedFlowBuff,
+    Multi = false,
+    Text = 'Select Flow Buff',
+    Tooltip = 'Choose a Flow Buff to Get',
+    Callback = function(NewType)
+        SelectedFlowBuff = NewType
+    end
+})
+
+-- ColorPicker для выбора цвета
+local TargetColor = Color3.new(0, 0, 0) -- Начальный цвет (черный)
+local BaseColor = Color3.new(0, 0, 0) -- Базовый цвет игрока
+
+Tab1:AddLabel(''):AddColorPicker('ColorPicker', {
+    Default = Color3.new(0, 0, 0), -- Черный цвет по умолчанию
+    Title = '', -- Название ColorPicker
+    Transparency = 0, -- Прозрачность (0 - полностью непрозрачный)
+
+    Callback = function(Value)
+        TargetColor = Value
+    end
+})
+
+-- Слайдер для диапазона цвета
+local ColorRange = 0 -- Диапазон допустимых отклонений цвета
+
+Tab1:AddSlider('ColorRangeSlider', {
+    Text = '',
+    Default = 0,
+    Min = 0,
+    Max = 255,
+    Rounding = 0,
+    Compact = false,
+
+    Callback = function(Value)
+        ColorRange = Value
+    end
+})
+
+-- Функция для уведомлений
+local function notifyIfObtained(itemType, itemName)
+    Library:Notify(string.format("You obtained %s: %s", itemType, itemName), 5)
+end
+
+-- Функции для работы с ростом
+local function GetActualHeight()
+    local heightValue = workspace[lPlayer.Name]:FindFirstChild("HeightValue")
+    if heightValue and heightValue:FindFirstChild("ActualHeight") and heightValue.ActualHeight:IsA("NumberValue") then
+        return heightValue.ActualHeight.Value
+    end
+    return 0
+end
+
+local function GetHeightIndex(height)
+    local heightMap = {
+        ["5.3"] = 1, ["5.4"] = 2, ["5.5"] = 3,
+        ["5.6"] = 4, ["5.7"] = 5, ["5.8"] = 6,
+        ["5.9"] = 7, ["5.10"] = 8, ["5.11"] = 9,
+        ["6.0"] = 10, ["6.1"] = 11, ["6.2"] = 12, ["6.3"] = 13
+    }
+    return heightMap[height] or nil
+end
+
+-- Переменная для отслеживания последнего выпавшего цвета
+local lastColorNotified = nil
+
+-- Флаги для отслеживания получения выбранных предметов
+local isWeaponObtained = false
+local isTraitObtained = false
+local isHeightObtained = false
+local isFlowTypeObtained = false
+local isFlowBuffObtained = false
+local isColorObtained = false
+
+local rollingConnection = false
+Tab1:AddToggle('Tab1Toggle', {
+    Text = 'AUTO SPIN',
+    Default = false,
+    Callback = function(isToggled)
+        rollingConnection = isToggled
+
+        -- Сброс флагов при включении/выключении
+        isWeaponObtained = false
+        isTraitObtained = false
+        isHeightObtained = false
+        isFlowTypeObtained = false
+        isFlowBuffObtained = false
+        isColorObtained = false
+
+        while rollingConnection do
+            wait(0.23)
+
+            -- Логика крутки оружия
+            if SelectedWeapon ~= "None" and not isWeaponObtained then
+                if not lPlayer.Backpack:FindFirstChild(SelectedWeapon) then
+                    WeaponRemote:FireServer(SelectedWeapon)
+                else
+                    notifyIfObtained("Weapon", SelectedWeapon)
+                    isWeaponObtained = true -- Останавливаем крутку оружия
+                end
+            end
+
+            -- Логика крутки трейтов
+            if SelectedTrait ~= "None " and not isTraitObtained then
+                if not lPlayer.Backpack:FindFirstChild("Trait") or not lPlayer.Backpack.Trait:FindFirstChild(SelectedTrait) then
+                    TraitRemote:FireServer(SelectedTrait)
+                else
+                    notifyIfObtained("Trait", SelectedTrait)
+                    isTraitObtained = true -- Останавливаем крутку трейтов
+                end
+            end
+
+            -- Логика крутки роста (только если выбран рост)
+            if SelectedHeight ~= "None " and not isHeightObtained then
+                local selectedIndex = GetHeightIndex(SelectedHeight)
+                local actualHeight = GetActualHeight()
+                if actualHeight ~= selectedIndex then
+                    reroll:FireServer()
+                else
+                    notifyIfObtained("Height", SelectedHeight)
+                    isHeightObtained = true -- Останавливаем крутку роста
+                end
+            end
+
+            -- Логика крутки FlowType
+            if SelectedFlowType ~= "None" and not isFlowTypeObtained then
+                if not lPlayer.Backpack:FindFirstChild("FlowType") or not lPlayer.Backpack.FlowType:FindFirstChild(SelectedFlowType) then
+                    FlowTypeRemote:FireServer(SelectedFlowType)
+                else
+                    notifyIfObtained("FlowType", SelectedFlowType)
+                    isFlowTypeObtained = true -- Останавливаем крутку FlowType
+                end
+            end
+
+            -- Логика крутки Flow Buff
+            if SelectedFlowBuff ~= "None" and not isFlowBuffObtained then
+                if not lPlayer.Backpack:FindFirstChild("FlowBuff") or not lPlayer.Backpack.FlowBuff:FindFirstChild(SelectedFlowBuff) then
+                    FlowBuffRemote:FireServer(SelectedFlowBuff)
+                else
+                    notifyIfObtained("Flow Buff", SelectedFlowBuff)
+                    isFlowBuffObtained = true -- Останавливаем крутку Flow Buff
+                end
+            end
+
+            -- Логика крутки цвета (только если слайдер цвета не равен 0)
+            if ColorRange > 0 and not isColorObtained then
+                local PlayerAuraColour = workspace[lPlayer.Name].AuraColour
+                if PlayerAuraColour then
+                    local currentColor = Color3.new(
+                        PlayerAuraColour.Red.Value,
+                        PlayerAuraColour.Green.Value,
+                        PlayerAuraColour.Blue.Value
+                    )
+                    
+                    local function IsColorInRange(target, current, range)
+                        local rDiff = math.abs(target.R * 255 - current.R * 255)
+                        local gDiff = math.abs(target.G * 255 - current.G * 255)
+                        local bDiff = math.abs(target.B * 255 - current.B * 255)
+                        return rDiff <= range and gDiff <= range and bDiff <= range
+                    end
+
+                    if not IsColorInRange(TargetColor, currentColor, ColorRange) then
+                        rStorage.rerolls.aurareroll:FireServer()
+                    else
+                        -- Форматируем цвет в формат "R, G, B"
+                        local formattedColor = string.format("%d, %d, %d", currentColor.R * 255, currentColor.G * 255, currentColor.B * 255)
+                        
+                        -- Проверяем, был ли уже показан этот цвет
+                        if lastColorNotified ~= formattedColor then
+                            notifyIfObtained("Color", formattedColor)
+                            lastColorNotified = formattedColor -- Обновляем последний уведомленный цвет
+                            isColorObtained = true -- Останавливаем крутку цвета
+                        end
+                    end
+                end
+            end
+
+            -- Если все выбранные предметы получены, останавливаем крутку
+            if (SelectedWeapon == "None" or isWeaponObtained) and
+               (SelectedTrait == "None " or isTraitObtained) and
+               (SelectedHeight == "None " or isHeightObtained) and
+               (SelectedFlowType == "None" or isFlowTypeObtained) and
+               (SelectedFlowBuff == "None" or isFlowBuffObtained) and
+               (ColorRange == 0 or isColorObtained) then
+                rollingConnection = false -- Останавливаем цикл крутки
+                Tab1:GetToggle('Tab1Toggle'):Set(false) -- Выключаем тоггл
+            end
+        end
+    end
+})
+Tab1:AddToggle('Inf Spins', {
+    Text = 'INF SPIN',
+    Default = false,
+    Callback = function(isToggled)
+        while isToggled do
+            wait(0.5)  -- Проверяем каждую милисекунду
+
+            local YenValue = workspace[lPlayer.Name]:FindFirstChild("RankSystem"):FindFirstChild("Yen")
+            if YenValue and YenValue.Value < 3000 then
+                -- Активируем скрипт перед перезагрузкой
+                local args = {
+                    [1] = "Right",
+                    [2] = "F\255"
+                }
+                game:GetService("ReplicatedStorage"):WaitForChild("rerolls"):WaitForChild("KeybindChange"):FireServer(unpack(args))
+
+                -- Перезагрузка на другой сервер
+                game:GetService("TeleportService"):Teleport(game.PlaceId, lPlayer) -- Перезагрузка на новый сервер
+                break
+            end
+        end
+    end
+})
+-- Library functions
+-- Sets the watermark visibility
+Library:SetWatermarkVisibility(true)
+
+-- Example of dynamically-updating watermark with common traits (fps and ping)
+local FrameTimer = tick()
+local FrameCounter = 0;
+local FPS = 60;
+
+local WatermarkConnection = game:GetService('RunService').RenderStepped:Connect(function()
+    FrameCounter += 1;
+
+    if (tick() - FrameTimer) >= 1 then
+        FPS = FrameCounter;
+        FrameTimer = tick();
+        FrameCounter = 0;
+    end;
+
+    Library:SetWatermark(('XEV HUB | %s fps | %s ms'):format(
+        math.floor(FPS),
+        math.floor(game:GetService('Stats').Network.ServerStatsItem['Data Ping']:GetValue())
+    ));
+end);
+
+Library.KeybindFrame.Visible = true; -- todo: add a function for this
+
+Library:OnUnload(function()
+    WatermarkConnection:Disconnect()
+
+    print('XEV UNLOADED')
+    Library.Unloaded = true
+end)
+
+
+-- I set NoUI so it does not show up in the keybinds menu
+local MenuGroup = Tabs['UI Settings']:AddLeftGroupbox('Menu')
+
+MenuGroup:AddToggle('AutoLoadToggle', {
+    Text = 'Auto Load',
+    Default = false,
+    Tooltip = 'Auto Loading the hub',
+
+    Callback = function(Value)
+        if Value then
+            -- Сохраняем состояние Auto Load
+            _G.AutoLoadEnabled = true
+            Library:Notify("Auto Load enabled. Script will reload after teleport or rejoin.", 5)
+        else
+            _G.AutoLoadEnabled = false
+            Library:Notify("Auto Load disabled.", 5)
+        end
+    end
+})
+
+-- Функция для автоматического запуска скрипта
+local function autoReloadScript()
+    if _G.AutoLoadEnabled then
+        -- Перезапуск скрипта
+        loadstring(game:HttpGet(repo .. 'Library.lua'))()
+        loadstring(game:HttpGet(repo .. 'addons/ThemeManager.lua'))()
+        loadstring(game:HttpGet(repo .. 'addons/SaveManager.lua'))()
+        Library:Notify("Script reloaded after teleport or rejoin.", 5)
+    end
+end
+
+-- Обработка события телепортации или перезахода
+game:GetService("Players").LocalPlayer.OnTeleport:Connect(function()
+    autoReloadScript()
+end)
+
+game:GetService("Players").LocalPlayer.CharacterAdded:Connect(function()
+    autoReloadScript()
+end)
+
+MenuGroup:AddButton('Unload', function() Library:Unload() end)
+MenuGroup:AddLabel('Menu bind'):AddKeyPicker('MenuKeybind', { Default = 'End', NoUI = true, Text = 'Menu keybind' })
+
+Library.ToggleKeybind = Options.MenuKeybind -- Allows you to have a custom keybind for the menu
+
+-- Addons:
+-- SaveManager (Allows you to have a configuration system)
+-- ThemeManager (Allows you to have a menu theme system)
+
+-- Hand the library over to our managers
+ThemeManager:SetLibrary(Library)
+SaveManager:SetLibrary(Library)
+
+-- Ignore keys that are used by ThemeManager.
+-- (we dont want configs to save themes, do we?)
+SaveManager:IgnoreThemeSettings()
+
+-- Adds our MenuKeybind to the ignore list
+-- (do you want each config to have a different menu key? probably not.)
+SaveManager:SetIgnoreIndexes({ 'MenuKeybind' })
+
+-- use case for doing it this way:
+-- a script hub could have themes in a global folder
+-- and game configs in a separate folder per game
+ThemeManager:SetFolder('MyScriptHub')
+SaveManager:SetFolder('MyScriptHub/specific-game')
+
+-- Builds our config menu on the right side of our tab
+SaveManager:BuildConfigSection(Tabs['UI Settings'])
+
+-- Builds our theme menu (with plenty of built in themes) on the left side
+-- NOTE: you can also call ThemeManager:ApplyToGroupbox to add it to a specific groupbox
+ThemeManager:ApplyToTab(Tabs['UI Settings'])
+
+-- You can use the SaveManager:LoadAutoloadConfig() to load a config
+-- which has been marked to be one that auto loads!
+SaveManager:LoadAutoloadConfig()
