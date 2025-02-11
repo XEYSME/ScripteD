@@ -5,23 +5,34 @@ local ThemeManager = loadstring(game:HttpGet(repo .. 'addons/ThemeManager.lua'))
 local SaveManager = loadstring(game:HttpGet(repo .. 'addons/SaveManager.lua'))()
 
 local Window = Library:CreateWindow({
-    Title = 'XEV HUB',
+    -- Set Center to true if you want the menu to appear in the center
+    -- Set AutoShow to true if you want the menu to appear when it is created
+    -- Position and Size are also valid options here
+    -- but you do not need to define them unless you are changing them :)
+
+    Title = 'Example menu',
     Center = true,
     AutoShow = true,
     TabPadding = 8,
     MenuFadeTime = 0.2
 })
 
+-- CALLBACK NOTE:
+-- Passing in callback functions via the initial element parameters (i.e. Callback = function(Value)...) works
+-- HOWEVER, using Toggles/Options.INDEX:OnChanged(function(Value) ... ) is the RECOMMENDED way to do this.
+-- I strongly recommend decoupling UI code from logic code. i.e. Create your UI elements FIRST, and THEN setup :OnChanged functions later.
+
+-- You do not have to set your tabs & groups up this way, just a prefrence.
 local Tabs = {
-    Main = Window:AddTab('AUTO'),
+    -- Creates a new tab titled Main
+    Main = Window:AddTab('Main'),
     ['UI Settings'] = Window:AddTab('UI Settings'),
 }
 
--- Добавляем Auto Load toggle в UI Settings
-
 -- Groupbox and Tabbox inherit the same functions
 -- except Tabboxes you have to call the functions on a tab (Tabbox:AddTab(name))
-local LeftGroupBox = Tabs.Main:AddLeftGroupbox('         Auto & Teleports')
+local LeftGroupBox = Tabs.Main:AddLeftGroupbox('Groupbox')
+
 -- We can also get our Main tab via the following code:
 -- local LeftGroupBox = Window.Tabs.Main:AddLeftGroupbox('Groupbox')
 
@@ -32,585 +43,340 @@ local TabBox = Tabs.Main:AddLeftTabbox() -- Add Tabbox on left side
 
 local Tab1 = TabBox:AddTab('Tab 1')
 local Tab2 = TabBox:AddTab('Tab 2')
+
 -- You can now call AddToggle, etc on the tabs you added to the Tabbox
 ]]
 
 -- Groupbox:AddToggle
 -- Arguments: Index, Options
-LeftGroupBox:AddToggle('AutoRedeemTasks', {
-    Text = 'Auto Tasks',
-    Default = false,
-    Tooltip = 'Automatically redeem Tasks',
-    Callback = function(isToggled)
-        if isToggled then
-            for Index = 1, 6 do
-                wait(0.1)
-                game:GetService("ReplicatedStorage").Tasks.RedeemAward:FireServer(Index)
-            end
-        end
-    end
-})
-
 LeftGroupBox:AddToggle('MyToggle', {
-    Text = 'Auto Codes',
-    Default = false,
-    Tooltip = 'Automatically redeem codes',
+    Text = 'This is a toggle',
+    Default = true, -- Default value (true / false)
+    Tooltip = 'This is a tooltip', -- Information shown when you hover over the toggle
 
     Callback = function(Value)
-        local rp = game.ReplicatedStorage
-
-        local CODES = {
-            "115KFAVOURITE",
-            "110MILVISITS",
-            "STRAIGHTRIPTIDE",
-            "DRAGONHEADER",
-            "150KMEMBERS",
-            "70KLIKES",
-            "10KSUBS"
-        }
-
-        if Value then
-            for _, code in ipairs(CODES) do
-                rp.SendCode:FireServer(code)
-                task.wait(0.1)
-            end
-        end
-    end
-})
-local Players = game:GetService("Players")
-local TeleportService = game:GetService("TeleportService")
-
-local function teleportToGame(gameId)
-    local player = Players.LocalPlayer
-    TeleportService:Teleport(gameId, player)
-end
-
-local gameId = 13705109069
-
-LeftGroupBox:AddToggle('MyToggle', {
-    Text = 'Auto Autos',
-    Default = false,
-    Tooltip = 'Automatically teleport Autos (Demo)',
-
-    Callback = function(Value)
-        if Value then
-            teleportToGame(gameId)
-        end
-    end
-})
-local ReplicatedStorage = game:GetService("ReplicatedStorage")
-
-local Players = game:GetService("Players")
-local TeleportService = game:GetService("TeleportService")
-
-local function teleportToGame(gameId)
-    local player = Players.LocalPlayer
-    TeleportService:Teleport(gameId, player)
-end
-
-local gameId = 17079303871
-
-LeftGroupBox:AddToggle('MyToggle', {
-    Text = 'Auto Tournament',
-    Default = false,
-    Tooltip = 'Automatically teleport Tournament (Demo)',
-
-    Callback = function(Value)
-        if Value then
-            teleportToGame(gameId)
-        end
+        print('[cb] MyToggle changed to:', Value)
     end
 })
 
-local LeftGroupBox = Tabs.Main:AddLeftGroupbox('          Build & Slots')
-local lPlayer = game.Players.LocalPlayer
-local backpack = lPlayer.Backpack
-local rStorage = game.ReplicatedStorage 
 
-local itemsList = {
-    "Ace Eater", "Planetary", "Formless", "Serpent", "Emperor",
-    "King", "GodSpeed", "Updraft", "SwordScrew", "Monster",
-    "Acrobatic", "Riptide", "Nagi", "Chigiri", "WatchTower",
-    "Voracious", "Shadow", "Kunigami", "CopyCat", "Accelerate",
-    "Web", "Repel", "Neurotic", "Snatch", "Rough",
-    "DirectShot", "LongLegs", "Leader", "IronHead"
-}
+-- Fetching a toggle object for later use:
+-- Toggles.MyToggle.Value
 
-local YenValue = workspace[lPlayer.Name].RankSystem.Yen
-local YenLabel = LeftGroupBox:AddLabel('CURRENT YEN: ' .. YenValue.Value)
+-- Toggles is a table added to getgenv() by the library
+-- You index Toggles with the specified index, in this case it is 'MyToggle'
+-- To get the state of the toggle you do toggle.Value
 
-local function updateYenDisplay()
-    YenLabel:SetText('CURRENT YEN: ' .. YenValue.Value)
-end
+-- Calls the passed function when the toggle is updated
+Toggles.MyToggle:OnChanged(function()
+    -- here we get our toggle object & then get its value
+    print('MyToggle changed to:', Toggles.MyToggle.Value)
+end)
 
-YenValue.Changed:Connect(updateYenDisplay)
-updateYenDisplay()
+-- This should print to the console: "My toggle state changed! New value: false"
+Toggles.MyToggle:SetValue(false)
 
-local currentLabel = LeftGroupBox:AddLabel('CURRENT WEAPON: ')
-local traitLabel = LeftGroupBox:AddLabel('CURRENT TRAIT: ')
-local heightLabel = LeftGroupBox:AddLabel('CURRENT HEIGHT: ')
+-- 1/15/23
+-- Deprecated old way of creating buttons in favor of using a table
+-- Added DoubleClick button functionality
 
-local function getCurrentHeight()
-    local heightValue = workspace[lPlayer.Name].HeightValue
-    if heightValue and heightValue:FindFirstChild("ActualHeight") and heightValue.ActualHeight:IsA("NumberValue") then
-        local heightIndex = heightValue.ActualHeight.Value
-        local heightMapping = {
-            [1] = "5.3",
-            [2] = "5.4",
-            [3] = "5.5",
-            [4] = "5.6",
-            [5] = "5.7",
-            [6] = "5.8",
-            [7] = "5.9",
-            [8] = "5.10",
-            [9] = "5.11",
-            [10] = "6.0",
-            [11] = "6.1",
-            [12] = "6.2",
-            [13] = "6.3"
-        }
-        return heightMapping[heightIndex] or "Unknown"
-    end
-    return "No height data"
-end
-
-local function updateBuildDisplay()
-    local foundItems = {}
-    local traitFolder = backpack:FindFirstChild("Trait")
-
-    for _, item in pairs(itemsList) do
-        if backpack:FindFirstChild(item) then
-            local trait = traitFolder and traitFolder:FindFirstChild(item)
-            local traitName = ""
-
-            if trait and trait:IsA("Object") then
-                traitName = trait.Name
-            end
-
-            table.insert(foundItems, string.upper(item) .. " " .. string.upper(traitName))
-        end
-    end
-
-    if #foundItems > 0 then
-        currentLabel:SetText('CURRENT WEAPON: ' .. table.concat(foundItems, ', '))
-    else
-        currentLabel:SetText('CURRENT WEAPON: ')
-    end
-
-    local foundTraits = {}
-    if traitFolder then
-        for _, trait in pairs(traitFolder:GetChildren()) do
-            if trait:IsA("Object") then
-                table.insert(foundTraits, string.upper(trait.Name))
-            end
-        end
-    end
-
-    if #foundTraits > 0 then
-        traitLabel:SetText('CURRENT TRAIT: ' .. table.concat(foundTraits, ', '))
-    else
-        traitLabel:SetText('CURRENT TRAIT: ')
-    end
-
-    local currentHeight = getCurrentHeight()
-    heightLabel:SetText('CURRENT HEIGHT: ' .. currentHeight)
-end
-
-local function onItemChanged()
-    updateBuildDisplay()
-end
-
-local function onTraitChanged()
-    updateBuildDisplay()
-end
-
-if backpack:FindFirstChild("Trait") then
-    local traitFolder = backpack.Trait
-    traitFolder.ChildAdded:Connect(onTraitChanged)
-    traitFolder.ChildRemoved:Connect(onTraitChanged)
-end
-
-backpack.ChildAdded:Connect(onItemChanged)
-backpack.ChildRemoved:Connect(onItemChanged)
-
-local heightValue = workspace[lPlayer.Name].HeightValue
-
-local function updateHeightDisplay()
-    local heightIndex = heightValue and heightValue:FindFirstChild("ActualHeight") and heightValue.ActualHeight:IsA("NumberValue") and heightValue.ActualHeight.Value or nil
-    local heightMapping = {
-        [1] = "5.3",
-        [2] = "5.4",
-        [3] = "5.5",
-        [4] = "5.6",
-        [5] = "5.7",
-        [6] = "5.8",
-        [7] = "5.9",
-        [8] = "5.10",
-        [9] = "5.11",
-        [10] = "6.0",
-        [11] = "6.1",
-        [12] = "6.2",
-        [13] = "6.3"
+--[[
+    Groupbox:AddButton
+    Arguments: {
+        Text = string,
+        Func = function,
+        DoubleClick = boolean
+        Tooltip = string,
     }
-    local currentHeight = heightMapping[heightIndex] or "Unknown"
-    heightLabel:SetText('CURRENT HEIGHT: ' .. currentHeight)
-end
 
-if heightValue:FindFirstChild("ActualHeight") then
-    heightValue.ActualHeight.Changed:Connect(updateHeightDisplay)
-end
-
-updateBuildDisplay()
-updateHeightDisplay()
-
-local SlotsRemote = rStorage.rerolls.Slots
+    You can call :AddButton on a button to add a SubButton!
+]]
 
 local MyButton = LeftGroupBox:AddButton({
-    Text = 'Change Slot',
+    Text = 'Button',
     Func = function()
-        SlotsRemote:FireServer(1)
+        print('You clicked a button!')
     end,
     DoubleClick = false,
-    Tooltip = 'Tap to Change Slot'
+    Tooltip = 'This is the main button'
 })
 
-local DuplicateButton = LeftGroupBox:AddButton({
-    Text = 'Duplicate Slot',
+local MyButton2 = MyButton:AddButton({
+    Text = 'Sub button',
     Func = function()
-        local Head = lPlayer.Character:WaitForChild("Head")
-        local TeleportService = game:GetService("TeleportService")
-        local Lobby = 12276235857
-
-        Head:Destroy()
-        lPlayer.CharacterAdded:Once(function()
-            SlotsRemote:FireServer(1)
-            task.delay(2, function()
-                TeleportService:Teleport(Lobby)
-            end)
-        end)
+        print('You clicked a sub button!')
     end,
-    DoubleClick = false,
-    Tooltip = 'Doing Duplicate Other Slot To Current'
+    DoubleClick = true, -- You will have to click this button twice to trigger the callback
+    Tooltip = 'This is the sub button (double click me!)'
 })
 
+--[[
+    NOTE: You can chain the button methods!
+    EXAMPLE:
+
+    LeftGroupBox:AddButton({ Text = 'Kill all', Func = Functions.KillAll, Tooltip = 'This will kill everyone in the game!' })
+        :AddButton({ Text = 'Kick all', Func = Functions.KickAll, Tooltip = 'This will kick everyone in the game!' })
+]]
+
+-- Groupbox:AddLabel
+-- Arguments: Text, DoesWrap
+LeftGroupBox:AddLabel('This is a label')
+LeftGroupBox:AddLabel('This is a label\n\nwhich wraps its text!', true)
+
+-- Groupbox:AddDivider
+-- Arguments: None
+LeftGroupBox:AddDivider()
+
+--[[
+    Groupbox:AddSlider
+    Arguments: Idx, SliderOptions
+
+    SliderOptions: {
+        Text = string,
+        Default = number,
+        Min = number,
+        Max = number,
+        Suffix = string,
+        Rounding = number,
+        Compact = boolean,
+        HideMax = boolean,
+    }
+
+    Text, Default, Min, Max, Rounding must be specified.
+    Suffix is optional.
+    Rounding is the number of decimal places for precision.
+
+    Compact will hide the title label of the Slider
+
+    HideMax will only display the value instead of the value & max value of the slider
+    Compact will do the same thing
+]]
+LeftGroupBox:AddSlider('MySlider', {
+    Text = 'This is my slider!',
+    Default = 0,
+    Min = 0,
+    Max = 5,
+    Rounding = 1,
+    Compact = false,
+
+    Callback = function(Value)
+        print('[cb] MySlider was changed! New value:', Value)
+    end
+})
+
+-- Options is a table added to getgenv() by the library
+-- You index Options with the specified index, in this case it is 'MySlider'
+-- To get the value of the slider you do slider.Value
+
+local Number = Options.MySlider.Value
+Options.MySlider:OnChanged(function()
+    print('MySlider was changed! New value:', Options.MySlider.Value)
+end)
+
+-- This should print to the console: "MySlider was changed! New value: 3"
+Options.MySlider:SetValue(3)
+
+-- Groupbox:AddInput
+-- Arguments: Idx, Info
+LeftGroupBox:AddInput('MyTextbox', {
+    Default = 'My textbox!',
+    Numeric = false, -- true / false, only allows numbers
+    Finished = false, -- true / false, only calls callback when you press enter
+
+    Text = 'This is a textbox',
+    Tooltip = 'This is a tooltip', -- Information shown when you hover over the textbox
+
+    Placeholder = 'Placeholder text', -- placeholder text when the box is empty
+    -- MaxLength is also an option which is the max length of the text
+
+    Callback = function(Value)
+        print('[cb] Text updated. New text:', Value)
+    end
+})
+
+Options.MyTextbox:OnChanged(function()
+    print('Text updated. New text:', Options.MyTextbox.Value)
+end)
+
+-- Groupbox:AddDropdown
+-- Arguments: Idx, Info
+
+LeftGroupBox:AddDropdown('MyDropdown', {
+    Values = { 'This', 'is', 'a', 'dropdown' },
+    Default = 1, -- number index of the value / string
+    Multi = false, -- true / false, allows multiple choices to be selected
+
+    Text = 'A dropdown',
+    Tooltip = 'This is a tooltip', -- Information shown when you hover over the dropdown
+
+    Callback = function(Value)
+        print('[cb] Dropdown got changed. New value:', Value)
+    end
+})
+
+Options.MyDropdown:OnChanged(function()
+    print('Dropdown got changed. New value:', Options.MyDropdown.Value)
+end)
+
+Options.MyDropdown:SetValue('This')
+
+-- Multi dropdowns
+LeftGroupBox:AddDropdown('MyMultiDropdown', {
+    -- Default is the numeric index (e.g. "This" would be 1 since it if first in the values list)
+    -- Default also accepts a string as well
+
+    -- Currently you can not set multiple values with a dropdown
+
+    Values = { 'This', 'is', 'a', 'dropdown' },
+    Default = 1,
+    Multi = true, -- true / false, allows multiple choices to be selected
+
+    Text = 'A dropdown',
+    Tooltip = 'This is a tooltip', -- Information shown when you hover over the dropdown
+
+    Callback = function(Value)
+        print('[cb] Multi dropdown got changed:', Value)
+    end
+})
+
+Options.MyMultiDropdown:OnChanged(function()
+    -- print('Dropdown got changed. New value:', )
+    print('Multi dropdown got changed:')
+    for key, value in next, Options.MyMultiDropdown.Value do
+        print(key, value) -- should print something like This, true
+    end
+end)
+
+Options.MyMultiDropdown:SetValue({
+    This = true,
+    is = true,
+})
+
+LeftGroupBox:AddDropdown('MyPlayerDropdown', {
+    SpecialType = 'Player',
+    Text = 'A player dropdown',
+    Tooltip = 'This is a tooltip', -- Information shown when you hover over the dropdown
+
+    Callback = function(Value)
+        print('[cb] Player dropdown got changed:', Value)
+    end
+})
+
+-- Label:AddColorPicker
+-- Arguments: Idx, Info
+
+-- You can also ColorPicker & KeyPicker to a Toggle as well
+
+LeftGroupBox:AddLabel('Color'):AddColorPicker('ColorPicker', {
+    Default = Color3.new(0, 1, 0), -- Bright green
+    Title = 'Some color', -- Optional. Allows you to have a custom color picker title (when you open it)
+    Transparency = 0, -- Optional. Enables transparency changing for this color picker (leave as nil to disable)
+
+    Callback = function(Value)
+        print('[cb] Color changed!', Value)
+    end
+})
+
+Options.ColorPicker:OnChanged(function()
+    print('Color changed!', Options.ColorPicker.Value)
+    print('Transparency changed!', Options.ColorPicker.Transparency)
+end)
+
+Options.ColorPicker:SetValueRGB(Color3.fromRGB(0, 255, 140))
+
+-- Label:AddKeyPicker
+-- Arguments: Idx, Info
+
+LeftGroupBox:AddLabel('Keybind'):AddKeyPicker('KeyPicker', {
+    -- SyncToggleState only works with toggles.
+    -- It allows you to make a keybind which has its state synced with its parent toggle
+
+    -- Example: Keybind which you use to toggle flyhack, etc.
+    -- Changing the toggle disables the keybind state and toggling the keybind switches the toggle state
+
+    Default = 'MB2', -- String as the name of the keybind (MB1, MB2 for mouse buttons)
+    SyncToggleState = false,
 
 
+    -- You can define custom Modes but I have never had a use for it.
+    Mode = 'Toggle', -- Modes: Always, Toggle, Hold
+
+    Text = 'Auto lockpick safes', -- Text to display in the keybind menu
+    NoUI = false, -- Set to true if you want to hide from the Keybind menu,
+
+    -- Occurs when the keybind is clicked, Value is `true`/`false`
+    Callback = function(Value)
+        print('[cb] Keybind clicked!', Value)
+    end,
+
+    -- Occurs when the keybind itself is changed, `New` is a KeyCode Enum OR a UserInputType Enum
+    ChangedCallback = function(New)
+        print('[cb] Keybind changed!', New)
+    end
+})
+
+-- OnClick is only fired when you press the keybind and the mode is Toggle
+-- Otherwise, you will have to use Keybind:GetState()
+Options.KeyPicker:OnClick(function()
+    print('Keybind clicked!', Options.KeyPicker:GetState())
+end)
+
+Options.KeyPicker:OnChanged(function()
+    print('Keybind changed!', Options.KeyPicker.Value)
+end)
+
+task.spawn(function()
+    while true do
+        wait(1)
+
+        -- example for checking if a keybind is being pressed
+        local state = Options.KeyPicker:GetState()
+        if state then
+            print('KeyPicker is being held down')
+        end
+
+        if Library.Unloaded then break end
+    end
+end)
+
+Options.KeyPicker:SetValue({ 'MB2', 'Toggle' }) -- Sets keybind to MB2, mode to Hold
+
+-- Long text label to demonstrate UI scrolling behaviour.
+local LeftGroupBox2 = Tabs.Main:AddLeftGroupbox('Groupbox #2');
+LeftGroupBox2:AddLabel('Oh no...\nThis label spans multiple lines!\n\nWe\'re gonna run out of UI space...\nJust kidding! Scroll down!\n\n\nHello from below!', true)
 
 local TabBox = Tabs.Main:AddRightTabbox() -- Add Tabbox on right side
 
 -- Anything we can do in a Groupbox, we can do in a Tabbox tab (AddToggle, AddSlider, AddLabel, etc etc...)
--- Функция для уведомлений
-local Tab1 = TabBox:AddTab('Spinning')
-local rStorage = game:GetService("ReplicatedStorage")
-local lPlayer = game:GetService("Players").LocalPlayer 
+local Tab1 = TabBox:AddTab('Tab 1')
+Tab1:AddToggle('Tab1Toggle', { Text = 'Tab1 Toggle' });
 
--- Сбор имен оружия
-local CollectedWeaponNames = {}
-for _, Weapon in ipairs(rStorage.Specs:GetChildren()) do
-    if not Weapon:IsA("Folder") then
-        table.insert(CollectedWeaponNames, Weapon.Name)
-    end
-end
-table.sort(CollectedWeaponNames)
+local Tab2 = TabBox:AddTab('Tab 2')
+Tab2:AddToggle('Tab2Toggle', { Text = 'Tab2 Toggle' });
 
-local SelectedWeapon = "None"
-local WeaponRemote = rStorage.rerolls.specreroll
+-- Dependency boxes let us control the visibility of UI elements depending on another UI elements state.
+-- e.g. we have a 'Feature Enabled' toggle, and we only want to show that features sliders, dropdowns etc when it's enabled!
+-- Dependency box example:
+local RightGroupbox = Tabs.Main:AddRightGroupbox('Groupbox #3');
+RightGroupbox:AddToggle('ControlToggle', { Text = 'Dependency box toggle' });
 
--- Выпадающий список для выбора оружия
-Tab1:AddDropdown('WeaponDropdown', {
-    Values = CollectedWeaponNames,
-    Default = SelectedWeapon,
-    Multi = false,
-    Text = 'Select Weapon',
-    Tooltip = 'Choose a Weapon to Get',
-    Callback = function(NewType)
-        SelectedWeapon = NewType
-    end
-})
+local Depbox = RightGroupbox:AddDependencyBox();
+Depbox:AddToggle('DepboxToggle', { Text = 'Sub-dependency box toggle' });
 
--- Сбор имен трейтов
-local CollectedTraitNames = {}
-for _, Trait in ipairs(rStorage.Specs.Traits:GetChildren()) do
-    if not Trait:IsA("Folder") then
-        table.insert(CollectedTraitNames, Trait.Name)
-    end
-end
-table.sort(CollectedTraitNames)
+-- We can also nest dependency boxes!
+-- When we do this, our SupDepbox automatically relies on the visiblity of the Depbox - on top of whatever additional dependencies we set
+local SubDepbox = Depbox:AddDependencyBox();
+SubDepbox:AddSlider('DepboxSlider', { Text = 'Slider', Default = 50, Min = 0, Max = 100, Rounding = 0 });
+SubDepbox:AddDropdown('DepboxDropdown', { Text = 'Dropdown', Default = 1, Values = {'a', 'b', 'c'} });
 
-local SelectedTrait = "None "
-local TraitRemote = rStorage.rerolls.traitreroll
+Depbox:SetupDependencies({
+    { Toggles.ControlToggle, true } -- We can also pass `false` if we only want our features to show when the toggle is off!
+});
 
--- Выпадающий список для выбора трейта
-Tab1:AddDropdown('TraitDropdown', {
-    Values = CollectedTraitNames,
-    Default = SelectedTrait,
-    Multi = false,
-    Text = 'Select Trait',
-    Tooltip = 'Choose a Trait to Get',
-    Callback = function(NewType)
-        SelectedTrait = NewType
-    end
-})
+SubDepbox:SetupDependencies({
+    { Toggles.DepboxToggle, true }
+});
 
--- Выбор роста
-local SelectedHeight = "None "
-local reroll = rStorage.rerolls.heightreroll
-
-Tab1:AddDropdown('HeightDropdown', {
-    Values = {"5.3", "5.4", "5.5", "5.6", "5.7", "5.8", "5.9", "5.10", "5.11", "6.0", "6.1", "6.2", "6.3"},
-    Default = SelectedHeight,
-    Multi = false,
-    Text = 'Select Height',
-    Tooltip = 'Choose a Height to Get',
-    Callback = function(NewType)
-        SelectedHeight = NewType
-    end
-})
-
--- Сбор имен FlowType
-local CollectedFlowTypeNames = {}
-for _, FlowType in ipairs(rStorage.FlowTypes.FlowValues:GetChildren()) do
-    if not FlowType:IsA("Folder") then
-        table.insert(CollectedFlowTypeNames, FlowType.Name)
-    end
-end
-table.sort(CollectedFlowTypeNames)
-
-local SelectedFlowType = "None"
-local FlowTypeRemote = rStorage.rerolls.flowreroll
-
--- Выпадающий список для выбора FlowType
-Tab1:AddDropdown('FlowTypeDropdown', {
-    Values = CollectedFlowTypeNames,
-    Default = SelectedFlowType,
-    Multi = false,
-    Text = 'Select FlowType',
-    Tooltip = 'Choose a FlowType to Get',
-    Callback = function(NewType)
-        SelectedFlowType = NewType
-    end
-})
-
-local FlowBuffs = {"speed", "power", "hitbox", "cooldown", "stamina"}
-local SelectedFlowBuff = "None"
-local FlowBuffRemote = rStorage.rerolls.buffreroll
-
--- Выпадающий список для выбора Flow Buff
-Tab1:AddDropdown('FlowBuffDropdown', {
-    Values = FlowBuffs,
-    Default = SelectedFlowBuff,
-    Multi = false,
-    Text = 'Select Flow Buff',
-    Tooltip = 'Choose a Flow Buff to Get',
-    Callback = function(NewType)
-        SelectedFlowBuff = NewType
-    end
-})
-
--- ColorPicker для выбора цвета
-local TargetColor = Color3.new(0, 0, 0) -- Начальный цвет (черный)
-local BaseColor = Color3.new(0, 0, 0) -- Базовый цвет игрока
-
-Tab1:AddLabel(''):AddColorPicker('ColorPicker', {
-    Default = Color3.new(0, 0, 0), -- Черный цвет по умолчанию
-    Title = '', -- Название ColorPicker
-    Transparency = 0, -- Прозрачность (0 - полностью непрозрачный)
-
-    Callback = function(Value)
-        TargetColor = Value
-    end
-})
-
--- Слайдер для диапазона цвета
-local ColorRange = 0 -- Диапазон допустимых отклонений цвета
-
-Tab1:AddSlider('ColorRangeSlider', {
-    Text = '',
-    Default = 0,
-    Min = 0,
-    Max = 255,
-    Rounding = 0,
-    Compact = false,
-
-    Callback = function(Value)
-        ColorRange = Value
-    end
-})
-
--- Функция для уведомлений
-local function notifyIfObtained(itemType, itemName)
-    Library:Notify(string.format("You obtained %s: %s", itemType, itemName), 5)
-end
-
--- Функции для работы с ростом
-local function GetActualHeight()
-    local heightValue = workspace[lPlayer.Name]:FindFirstChild("HeightValue")
-    if heightValue and heightValue:FindFirstChild("ActualHeight") and heightValue.ActualHeight:IsA("NumberValue") then
-        return heightValue.ActualHeight.Value
-    end
-    return 0
-end
-
-local function GetHeightIndex(height)
-    local heightMap = {
-        ["5.3"] = 1, ["5.4"] = 2, ["5.5"] = 3,
-        ["5.6"] = 4, ["5.7"] = 5, ["5.8"] = 6,
-        ["5.9"] = 7, ["5.10"] = 8, ["5.11"] = 9,
-        ["6.0"] = 10, ["6.1"] = 11, ["6.2"] = 12, ["6.3"] = 13
-    }
-    return heightMap[height] or nil
-end
-
--- Переменная для отслеживания последнего выпавшего цвета
-local lastColorNotified = nil
-
--- Флаги для отслеживания получения выбранных предметов
-local isWeaponObtained = false
-local isTraitObtained = false
-local isHeightObtained = false
-local isFlowTypeObtained = false
-local isFlowBuffObtained = false
-local isColorObtained = false
-
-local rollingConnection = false
-Tab1:AddToggle('Tab1Toggle', {
-    Text = 'AUTO SPIN',
-    Default = false,
-    Callback = function(isToggled)
-        rollingConnection = isToggled
-
-        -- Сброс флагов при включении/выключении
-        isWeaponObtained = false
-        isTraitObtained = false
-        isHeightObtained = false
-        isFlowTypeObtained = false
-        isFlowBuffObtained = false
-        isColorObtained = false
-
-        while rollingConnection do
-            wait(0.23)
-
-            -- Логика крутки оружия
-            if SelectedWeapon ~= "None" and not isWeaponObtained then
-                if not lPlayer.Backpack:FindFirstChild(SelectedWeapon) then
-                    WeaponRemote:FireServer(SelectedWeapon)
-                else
-                    notifyIfObtained("Weapon", SelectedWeapon)
-                    isWeaponObtained = true -- Останавливаем крутку оружия
-                end
-            end
-
-            -- Логика крутки трейтов
-            if SelectedTrait ~= "None " and not isTraitObtained then
-                if not lPlayer.Backpack:FindFirstChild("Trait") or not lPlayer.Backpack.Trait:FindFirstChild(SelectedTrait) then
-                    TraitRemote:FireServer(SelectedTrait)
-                else
-                    notifyIfObtained("Trait", SelectedTrait)
-                    isTraitObtained = true -- Останавливаем крутку трейтов
-                end
-            end
-
-            -- Логика крутки роста (только если выбран рост)
-            if SelectedHeight ~= "None " and not isHeightObtained then
-                local selectedIndex = GetHeightIndex(SelectedHeight)
-                local actualHeight = GetActualHeight()
-                if actualHeight ~= selectedIndex then
-                    reroll:FireServer()
-                else
-                    notifyIfObtained("Height", SelectedHeight)
-                    isHeightObtained = true -- Останавливаем крутку роста
-                end
-            end
-
-            -- Логика крутки FlowType
-            if SelectedFlowType ~= "None" and not isFlowTypeObtained then
-                if not lPlayer.Backpack:FindFirstChild("FlowType") or not lPlayer.Backpack.FlowType:FindFirstChild(SelectedFlowType) then
-                    FlowTypeRemote:FireServer(SelectedFlowType)
-                else
-                    notifyIfObtained("FlowType", SelectedFlowType)
-                    isFlowTypeObtained = true -- Останавливаем крутку FlowType
-                end
-            end
-
-            -- Логика крутки Flow Buff
-            if SelectedFlowBuff ~= "None" and not isFlowBuffObtained then
-                if not lPlayer.Backpack:FindFirstChild("FlowBuff") or not lPlayer.Backpack.FlowBuff:FindFirstChild(SelectedFlowBuff) then
-                    FlowBuffRemote:FireServer(SelectedFlowBuff)
-                else
-                    notifyIfObtained("Flow Buff", SelectedFlowBuff)
-                    isFlowBuffObtained = true -- Останавливаем крутку Flow Buff
-                end
-            end
-
-            -- Логика крутки цвета (только если слайдер цвета не равен 0)
-            if ColorRange > 0 and not isColorObtained then
-                local PlayerAuraColour = workspace[lPlayer.Name].AuraColour
-                if PlayerAuraColour then
-                    local currentColor = Color3.new(
-                        PlayerAuraColour.Red.Value,
-                        PlayerAuraColour.Green.Value,
-                        PlayerAuraColour.Blue.Value
-                    )
-                    
-                    local function IsColorInRange(target, current, range)
-                        local rDiff = math.abs(target.R * 255 - current.R * 255)
-                        local gDiff = math.abs(target.G * 255 - current.G * 255)
-                        local bDiff = math.abs(target.B * 255 - current.B * 255)
-                        return rDiff <= range and gDiff <= range and bDiff <= range
-                    end
-
-                    if not IsColorInRange(TargetColor, currentColor, ColorRange) then
-                        rStorage.rerolls.aurareroll:FireServer()
-                    else
-                        -- Форматируем цвет в формат "R, G, B"
-                        local formattedColor = string.format("%d, %d, %d", currentColor.R * 255, currentColor.G * 255, currentColor.B * 255)
-                        
-                        -- Проверяем, был ли уже показан этот цвет
-                        if lastColorNotified ~= formattedColor then
-                            notifyIfObtained("Color", formattedColor)
-                            lastColorNotified = formattedColor -- Обновляем последний уведомленный цвет
-                            isColorObtained = true -- Останавливаем крутку цвета
-                        end
-                    end
-                end
-            end
-
-            -- Если все выбранные предметы получены, останавливаем крутку
-            if (SelectedWeapon == "None" or isWeaponObtained) and
-               (SelectedTrait == "None " or isTraitObtained) and
-               (SelectedHeight == "None " or isHeightObtained) and
-               (SelectedFlowType == "None" or isFlowTypeObtained) and
-               (SelectedFlowBuff == "None" or isFlowBuffObtained) and
-               (ColorRange == 0 or isColorObtained) then
-                rollingConnection = false -- Останавливаем цикл крутки
-                Tab1:GetToggle('Tab1Toggle'):Set(false) -- Выключаем тоггл
-            end
-        end
-    end
-})
-Tab1:AddToggle('Inf Spins', {
-    Text = 'INF SPIN',
-    Default = false,
-    Callback = function(isToggled)
-        while isToggled do
-            wait(0.5)  -- Проверяем каждую милисекунду
-
-            local YenValue = workspace[lPlayer.Name]:FindFirstChild("RankSystem"):FindFirstChild("Yen")
-            if YenValue and YenValue.Value < 3000 then
-                -- Активируем скрипт перед перезагрузкой
-                local args = {
-                    [1] = "Right",
-                    [2] = "F\255"
-                }
-                game:GetService("ReplicatedStorage"):WaitForChild("rerolls"):WaitForChild("KeybindChange"):FireServer(unpack(args))
-
-                -- Перезагрузка на другой сервер
-                game:GetService("TeleportService"):Teleport(game.PlaceId, lPlayer) -- Перезагрузка на новый сервер
-                break
-            end
-        end
-    end
-})
 -- Library functions
 -- Sets the watermark visibility
 Library:SetWatermarkVisibility(true)
@@ -629,7 +395,7 @@ local WatermarkConnection = game:GetService('RunService').RenderStepped:Connect(
         FrameCounter = 0;
     end;
 
-    Library:SetWatermark(('XEV HUB | %s fps | %s ms'):format(
+    Library:SetWatermark(('LinoriaLib demo | %s fps | %s ms'):format(
         math.floor(FPS),
         math.floor(game:GetService('Stats').Network.ServerStatsItem['Data Ping']:GetValue())
     ));
@@ -640,51 +406,14 @@ Library.KeybindFrame.Visible = true; -- todo: add a function for this
 Library:OnUnload(function()
     WatermarkConnection:Disconnect()
 
-    print('XEV UNLOADED')
+    print('Unloaded!')
     Library.Unloaded = true
 end)
 
-
--- I set NoUI so it does not show up in the keybinds menu
+-- UI Settings
 local MenuGroup = Tabs['UI Settings']:AddLeftGroupbox('Menu')
 
-MenuGroup:AddToggle('AutoLoadToggle', {
-    Text = 'Auto Load',
-    Default = false,
-    Tooltip = 'Auto Loading the hub',
-
-    Callback = function(Value)
-        if Value then
-            -- Сохраняем состояние Auto Load
-            _G.AutoLoadEnabled = true
-            Library:Notify("Auto Load enabled. Script will reload after teleport or rejoin.", 5)
-        else
-            _G.AutoLoadEnabled = false
-            Library:Notify("Auto Load disabled.", 5)
-        end
-    end
-})
-
--- Функция для автоматического запуска скрипта
-local function autoReloadScript()
-    if _G.AutoLoadEnabled then
-        -- Перезапуск скрипта
-        loadstring(game:HttpGet(repo .. 'Library.lua'))()
-        loadstring(game:HttpGet(repo .. 'addons/ThemeManager.lua'))()
-        loadstring(game:HttpGet(repo .. 'addons/SaveManager.lua'))()
-        Library:Notify("Script reloaded after teleport or rejoin.", 5)
-    end
-end
-
--- Обработка события телепортации или перезахода
-game:GetService("Players").LocalPlayer.OnTeleport:Connect(function()
-    autoReloadScript()
-end)
-
-game:GetService("Players").LocalPlayer.CharacterAdded:Connect(function()
-    autoReloadScript()
-end)
-
+-- I set NoUI so it does not show up in the keybinds menu
 MenuGroup:AddButton('Unload', function() Library:Unload() end)
 MenuGroup:AddLabel('Menu bind'):AddKeyPicker('MenuKeybind', { Default = 'End', NoUI = true, Text = 'Menu keybind' })
 
